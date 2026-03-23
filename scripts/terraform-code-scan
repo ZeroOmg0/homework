@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+helpFunction() {
+  echo ""
+  echo "Usage: $0 -p <absolute_path> -o <type> -q"
+  echo -e "\t-p absolute path of your terraform code you want to do security check. Current path by default."
+  echo -e "\t-o report output format, [{cli,json}], json by default."
+  echo -e "\t-q quiet mode for cli output, only failed security checks will be outputed, quiet mode by default."
+}
+
+run_checkov_with_cli_output() {
+  if [[ "true" == $quiet ]]; then
+    checkov -d "$scan_path" --quiet
+  else
+    checkov -d "$scan_path"
+  fi
+}
+
+run_checkov_with_json_output() {
+  checkov -d "$scan_path" -o json | tee scan_results.json
+}
+
+run_security_check() {
+  if [[ "json" == $output_type ]]; then
+    run_checkov_with_json_output
+  elif [[ "cli" == $output_type ]]; then
+    run_checkov_with_cli_output
+  else
+    helpFunction
+    return 1
+  fi
+  echo "security check complete"
+  return 0
+}
+
+scan_path="$(pwd)"
+output_type="json"
+quiet=true
+
+while getopts ":hqp:o:" opt; do
+  case "$opt" in
+    p) scan_path="$OPTARG";;
+    o) output_type="$OPTARG";;
+    q) quiet=true;;
+    h) helpFunction; exit 0;;
+    ?) helpFunction; exit 1;;
+  esac
+done
+
+run_security_check
