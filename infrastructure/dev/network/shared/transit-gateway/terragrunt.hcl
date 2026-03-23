@@ -1,0 +1,18 @@
+include "root" {
+  path   = find_in_parent_folders()
+  expose = true
+}
+
+terraform {
+  source = "../../../../../modules/unit/transit-gateway"
+}
+
+locals {
+  name = "${include.root.locals.project}-${include.root.locals.environment}-tgw"
+  tags = include.root.locals.common_tags
+}
+
+inputs = {
+  name = local.name
+  tags = local.tags
+}
